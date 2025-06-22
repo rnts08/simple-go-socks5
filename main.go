@@ -389,7 +389,6 @@ func handleConnection(conn net.Conn) {
 	}
 	if DoAuth {
 		if err := handleAuth(conn, stats); err != nil {
-			x
 			log.Println("socks auth:", err)
 			return
 		}
