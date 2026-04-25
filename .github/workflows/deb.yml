@@ -142,6 +142,13 @@ jobs:
           name: go-socks5_arm64
           path: arm64
 
+      - name: Debug - list files
+        run: |
+          echo "=== AMD64 ==="
+          ls -la amd64/
+          echo "=== ARM64 ==="
+          ls -la arm64/
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -154,3 +161,10 @@ jobs:
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Debug files
+        run: |
+          echo "=== AMD64 ==="
+          ls -la amd64/
+          echo "=== ARM64 ==="
+          ls -la arm64/
