@@ -1,4 +1,4 @@
-name: Build .deb Package
+name: Build Release Binaries
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     types: [published]
 
 jobs:
-  build-amd64:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,148 +23,38 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Install Debian packaging tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y debhelper devscripts
 
       - name: Build Go binary for amd64
         run: |
-          docker build --platform linux/amd64 -t go-socks5:amd64 .
-
-      - name: Extract binary
-        run: |
-          docker rm -f go-socks5-extract 2>/dev/null || true
-          docker create --name go-socks5-extract go-socks5:amd64
-          docker cp go-socks5-extract:/go/bin/go-socks5 ./go-socks5-amd64
-          docker rm go-socks5-extract
-          chmod +x go-socks5-amd64
-
-      - name: Create debian package
-        run: |
-          export DEBEMAIL="release@example.com"
-          export EMAIL="release@example.com"
-          export DEBFULLNAME="Go Socks5 Release"
-          
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "$VERSION" > VERSION
-          cp go-socks5-amd64 go-socks5
-          dch --newversion "$VERSION-1" --distribution stable "Release $VERSION"
-          dpkg-buildpackage -us -uc -d
-
-      - name: Find .deb file
-        run: |
-          FILENAME=$(ls ../go-socks5_*.deb)
-          cp "$FILENAME" .
-          echo "filename=$(basename $FILENAME)" >> $GITHUB_OUTPUT
-        id: find
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: go-socks5_amd64
-          path: ${{ steps.find.outputs.filename }}
-
-  build-arm64:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Install Debian packaging tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y debhelper devscripts
+          docker build --build-arg GOARCH=amd64 --platform linux/amd64 -t go-socks5:amd64 .
 
       - name: Build Go binary for arm64
         run: |
-          docker build --platform linux/arm64 -t go-socks5:arm64 .
+          docker build --build-arg GOARCH=arm64 --platform linux/arm64 -t go-socks5:arm64 .
 
-      - name: Extract binary
+      - name: Extract amd64 binary
         run: |
-          docker rm -f go-socks5-extract 2>/dev/null || true
-          docker create --name go-socks5-extract go-socks5:arm64
-          docker cp go-socks5-extract:/go/bin/go-socks5 ./go-socks5-arm64
-          docker rm go-socks5-extract
-          chmod +x go-socks5-arm64
+          docker create --name go-socks5-amd64 go-socks5:amd64
+          docker cp go-socks5-amd64:/go/bin/go-socks5 ./go-socks5-linux-amd64
+          docker rm go-socks5-amd64
+          chmod +x go-socks5-linux-amd64
 
-      - name: Create debian package
+      - name: Extract arm64 binary
         run: |
-          export DEBEMAIL="release@example.com"
-          export EMAIL="release@example.com"
-          export DEBFULLNAME="Go Socks5 Release"
-          
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "$VERSION" > VERSION
-          cp go-socks5-arm64 go-socks5
-          dch --newversion "$VERSION-1" --distribution stable "Release $VERSION"
-          dpkg-buildpackage -us -uc -d
-
-      - name: Find .deb file
-        run: |
-          FILENAME=$(ls ../go-socks5_*.deb)
-          cp "$FILENAME" .
-          echo "filename=$(basename $FILENAME)" >> $GITHUB_OUTPUT
-        id: find
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: go-socks5_arm64
-          path: ${{ steps.find.outputs.filename }}
-
-  release:
-    needs: [build-amd64, build-arm64]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download amd64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: go-socks5_amd64
-          path: amd64
-
-      - name: Download arm64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: go-socks5_arm64
-          path: arm64
-
-      - name: Debug - list files
-        run: |
-          echo "=== AMD64 ==="
-          ls -la amd64/
-          echo "=== ARM64 ==="
-          ls -la arm64/
+          docker create --name go-socks5-arm64 go-socks5:arm64
+          docker cp go-socks5-arm64:/go/bin/go-socks5 ./go-socks5-linux-arm64
+          docker rm go-socks5-arm64
+          chmod +x go-socks5-linux-arm64
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            amd64/go-socks5_*.deb
-            arm64/go-socks5_*.deb
+            go-socks5-linux-amd64
+            go-socks5-linux-arm64
           draft: false
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Debug files
-        run: |
-          echo "=== AMD64 ==="
-          ls -la amd64/
-          echo "=== ARM64 ==="
-          ls -la arm64/
