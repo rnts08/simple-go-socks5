@@ -19,7 +19,7 @@ A production-ready SOCKS5 proxy server written in Go with authentication and tra
 
 ### Runtime
 
-- **Go 1.23+**: If building from source
+- **Go 1.25+**: If building from source
 - **Linux**: For systemd/SysVinit integration
 - **Network access**: For remote API modes
 
@@ -61,12 +61,14 @@ make build
 
 ### Option 2: Download Release
 
-Download the latest binary from the releases page for your architecture:
+Download the latest .deb package from the releases page for your architecture:
 
 ```bash
-# Linux x86_64
-curl -L https:// releases.example.com/socks5-linux-x86_64 -o socks5
-chmod +x socks5
+# Install (Debian/Ubuntu)
+sudo dpkg -i go-socks5_*.deb
+
+# Or extract manually
+dpkg-deb -x go-socks5_*.deb /tmp/socks5
 ```
 
 ## Usage
