@@ -13,7 +13,11 @@ build:
 	go build -o $(BINARY_NAME) .
 
 test:
-	go test ./... -v -count=1
+	go test ./internal/... -v -count=1
+
+test-e2e:
+	@echo "Running e2e tests..."
+	bash test_e2e.sh
 
 test-coverage:
 	go test ./... -coverprofile=coverage.out
