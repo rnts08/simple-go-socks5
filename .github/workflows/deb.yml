@@ -25,10 +25,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y dh-make debhelper devscripts
+          sudo apt-get install -y dh-make debhelper devscripts build-essential golang-go
 
       - name: Build the package
         run: |
+          # Set up environment for dch
+          export DEBEMAIL="release@example.com"
+          export EMAIL="release@example.com"
+          export DEBFULLNAME="Go Socks5 Release"
+          
           # Set up version
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "$VERSION" > VERSION
@@ -37,7 +42,7 @@ jobs:
           dch --newversion "$VERSION-1" --distribution stable "Release $VERSION"
           
           # Build
-          dpkg-buildpackage -us -uc
+          dpkg-buildpackage -us -uc -d
 
       - name: Find .deb file
         run: |
