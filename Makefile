@@ -2,7 +2,7 @@
 
 BINARY_NAME=socks5
 INSTALL_DIR=/usr/local/bin
-CONFIG_DIR=/etc/socks5
+CONFIG_DIR=/etc/go-socks5
 INIT_DIR=/etc/init.d
 SYSTEMD_DIR=/etc/systemd/system
 DEFAULT_DIR=/etc/default
