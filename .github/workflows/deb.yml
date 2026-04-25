@@ -24,6 +24,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Install Debian packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debhelper devscripts
+
       - name: Build Go binary for amd64
         run: |
           docker build --platform linux/amd64 -t go-socks5:amd64 .
@@ -75,6 +80,11 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Install Debian packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debhelper devscripts
 
       - name: Build Go binary for arm64
         run: |
