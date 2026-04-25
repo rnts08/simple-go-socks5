@@ -30,7 +30,10 @@ jobs:
 
       - name: Extract binary
         run: |
-          docker run --rm go-socks5:amd64 cat /go/bin/go-socks5 > go-socks5-amd64
+          docker rm -f go-socks5-extract 2>/dev/null || true
+          docker create --name go-socks5-extract go-socks5:amd64
+          docker cp go-socks5-extract:/go/bin/go-socks5 ./go-socks5-amd64
+          docker rm go-socks5-extract
           chmod +x go-socks5-amd64
 
       - name: Create debian package
@@ -79,7 +82,10 @@ jobs:
 
       - name: Extract binary
         run: |
-          docker run --rm go-socks5:arm64 cat /go/bin/go-socks5 > go-socks5-arm64
+          docker rm -f go-socks5-extract 2>/dev/null || true
+          docker create --name go-socks5-extract go-socks5:arm64
+          docker cp go-socks5-extract:/go/bin/go-socks5 ./go-socks5-arm64
+          docker rm go-socks5-extract
           chmod +x go-socks5-arm64
 
       - name: Create debian package
