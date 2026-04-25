@@ -1,0 +1,30 @@
+[Unit]
+Description=SOCKS5 Proxy Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+ExecStart=/usr/local/bin/socks5 \
+  --addr :8080 \
+  --auth-db-path /etc/socks5/users.db \
+  --accounting-db-path /etc/socks5/traffic.db
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/
+
+# Allow write to config directory
+ReadWritePaths=/etc/socks5
+
+[Install]
+WantedBy=multi-user.target

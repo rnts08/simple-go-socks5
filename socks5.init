@@ -1,0 +1,68 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          socks5
+# Required-Start:    $network $remote_fs $syslog
+# Required-Stop:     $network $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: SOCKS5 Proxy Server
+# Description:      A SOCKS5 proxy server with authentication and traffic accounting
+### END INIT INFO
+
+NAME=socks5
+DESC="SOCKS5 Proxy Server"
+BIN=/usr/local/bin/socks5
+PIDFILE=/var/run/$NAME.pid
+CONFIG_DIR=/etc/socks5
+
+# Default config (can be overridden in /etc/default/socks5)
+ADDR=":8080"
+AUTH_MODE="local"
+AUTH_DB_PATH="$CONFIG_DIR/users.db"
+ACCOUNTING_MODE="local"
+ACCOUNTING_DB_PATH="$CONFIG_DIR/traffic.db"
+VERBOSE="false"
+
+# Load defaults
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+# Build args
+ARGS="--addr $ADDR --auth-mode $AUTH_MODE --auth-db-path $AUTH_DB_PATH --accounting-mode $ACCOUNTING_MODE --accounting-db-path $ACCOUNTING_DB_PATH"
+[ "$VERBOSE" = "true" ] && ARGS="$ARGS -v"
+
+[ -x $BIN ] || exit 0
+
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+    log_daemon_msg "Starting $DESC" "$NAME"
+    if start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $BIN -- $ARGS; then
+      log_end_msg 0
+    else
+      log_end_msg 1
+    fi
+    ;;
+  stop)
+    log_daemon_msg "Stopping $DESC" "$NAME"
+    if start-stop-daemon --stop --quiet --pidfile $PIDFILE; then
+      log_end_msg 0
+    else
+      log_end_msg 1
+    fi
+    ;;
+  restart|force-reload)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+  status)
+    status_of_pid "$PIDFILE" "$NAME" "($DESC)" || exit $?
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|force-reload|status}" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

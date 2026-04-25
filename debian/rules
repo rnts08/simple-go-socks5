@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+
+DESTDIR?=/tmp/destdir
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	go build -o go-socks5 .
+
+override_dh_auto_install:
+	# Install binary
+	mkdir -p $(DESTDIR)/usr/bin
+	mkdir -p $(DESTDIR)/lib/systemd/system
+	mkdir -p $(DESTDIR)/etc/default
+	mkdir -p $(DESTDIR)/usr/share/doc/go-socks5
+	install -m 755 go-socks5 $(DESTDIR)/usr/bin/go-socks5
+	install -m 644 debian/go-socks5.service $(DESTDIR)/lib/systemd/system/go-socks5.service
+	install -m 644 debian/default $(DESTDIR)/etc/default/go-socks5
+	install -m 644 config.example.yaml $(DESTDIR)/usr/share/doc/go-socks5/config.example.yaml
+	install -m 644 users.schema.sql $(DESTDIR)/usr/share/doc/go-socks5/users.schema.sql
+	install -m 644 traffic.schema.sql $(DESTDIR)/usr/share/doc/go-socks5/traffic.schema.sql
+	install -m 644 readme.md $(DESTDIR)/usr/share/doc/go-socks5/README.Debian

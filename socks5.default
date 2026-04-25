@@ -1,0 +1,26 @@
+# SOCKS5 Proxy Server Configuration
+# Copy to /etc/default/socks5 and modify as needed
+
+# Listen address
+ADDR=":8080"
+
+# Verbose logging
+VERBOSE="false"
+
+# Authentication
+AUTH_MODE="local"
+AUTH_DB_PATH="/etc/socks5/users.db"
+# AUTH_MODE="remote"
+# AUTH_API_URL="https://api.example.com/api/login"
+# AUTH_API_KEY=""
+
+# Traffic Accounting
+ACCOUNTING_MODE="local"
+ACCOUNTING_DB_PATH="/etc/socks5/traffic.db"
+# ACCOUNTING_MODE="remote"
+# ACCOUNTING_API_URL="https://api.example.com"
+# ACCOUNTING_API_KEY=""
+# ACCOUNTING_INTERVAL="60s"
+
+# Mock mode (disable real API calls, just log)
+# MOCK_API="true"
