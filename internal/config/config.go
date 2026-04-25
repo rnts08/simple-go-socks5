@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -17,23 +18,31 @@ const (
 )
 
 type Config struct {
-	ListenAddr      string
-	Verbose         bool
-	AuthMode        Mode
-	AuthDBPath      string
-	AuthAPIURL      string
-	AuthAPIKey      string
-	AccountingMode Mode
-	AccountingDBPath string
-	AccountingAPIURL string
-	AccountingAPIKey string
+	ListenAddr           string
+	Verbose              bool
+	AuthMode             Mode
+	AuthDBPath           string
+	AuthAPIURL           string
+	AuthAPIKey           string
+	AccountingMode      Mode
+	AccountingDBPath    string
+	AccountingAPIURL   string
+	AccountingAPIKey   string
 	AccountingInterval time.Duration
-	MockAPI         bool
+	MockAPI           bool
 }
 
 var cfg *Config
+var once sync.Once
 
 func Parse() *Config {
+	once.Do(func() {
+		cfg = parse()
+	})
+	return cfg
+}
+
+func parse() *Config {
 	if cfg != nil {
 		return cfg
 	}
@@ -54,18 +63,18 @@ func Parse() *Config {
 	flag.Parse()
 
 	cfg = &Config{
-		ListenAddr:          *listenAddr,
-		Verbose:             *verbose,
-		AuthMode:            Mode(*authMode),
-		AuthDBPath:          *authDBPath,
-		AuthAPIURL:          *authAPIURL,
-		AuthAPIKey:          *authAPIKey,
-		AccountingMode:     Mode(*accountingMode),
-		AccountingDBPath:    *accountingDBPath,
-		AccountingAPIURL:   *accountingAPIURL,
-		AccountingAPIKey:   *accountingAPIKey,
+		ListenAddr:           *listenAddr,
+		Verbose:          *verbose,
+		AuthMode:        Mode(*authMode),
+		AuthDBPath:      *authDBPath,
+		AuthAPIURL:     *authAPIURL,
+		AuthAPIKey:     *authAPIKey,
+		AccountingMode: Mode(*accountingMode),
+		AccountingDBPath:  *accountingDBPath,
+		AccountingAPIURL: *accountingAPIURL,
+		AccountingAPIKey: *accountingAPIKey,
 		AccountingInterval:  *accountingInterval,
-		MockAPI:             *mockAPI,
+		MockAPI:         *mockAPI,
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -74,6 +83,23 @@ func Parse() *Config {
 	}
 
 	return cfg
+}
+
+func NewConfig(listenAddr string, verbose bool, authMode Mode, authDBPath, authAPIURL, authAPIKey string, accountingMode Mode, accountingDBPath, accountingAPIURL, accountingAPIKey string, accountingInterval time.Duration, mockAPI bool) *Config {
+	return &Config{
+		ListenAddr:           listenAddr,
+		Verbose:             verbose,
+		AuthMode:           authMode,
+		AuthDBPath:         authDBPath,
+		AuthAPIURL:         authAPIURL,
+		AuthAPIKey:         authAPIKey,
+		AccountingMode:    accountingMode,
+		AccountingDBPath:  accountingDBPath,
+		AccountingAPIURL:  accountingAPIURL,
+		AccountingAPIKey:  accountingAPIKey,
+		AccountingInterval: accountingInterval,
+		MockAPI:           mockAPI,
+	}
 }
 
 func (c *Config) validate() error {
