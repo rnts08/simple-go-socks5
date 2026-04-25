@@ -2,14 +2,18 @@ package main
 
 import (
 	"encoding/binary"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
 	"runtime"
 	"strconv"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"vn-socks-proxy/internal/accounting"
 	"vn-socks-proxy/internal/auth"
@@ -17,17 +21,21 @@ import (
 )
 
 var (
-	Commands      = []string{"CONNECT", "BIND", "UDP ASSOCIATE"}
-	AddrType     = []string{"", "IPv4", "", "Domain", "IPv6"}
-	Verbose      = false
-	errAddrType   = fmt.Errorf("socks addr type not supported")
-	errVer       = fmt.Errorf("socks version not supported")
-	errAuthExtraData = fmt.Errorf("socks authentication received extra data")
-	errReqExtraData = fmt.Errorf("socks request received extra data")
-	errCmd        = fmt.Errorf("socks only supports CONNECT command")
-	connStats    = make(map[net.Conn]*ClientStats)
-	statsMutex   sync.RWMutex
+	Commands        = []string{"CONNECT", "BIND", "UDP ASSOCIATE"}
+	AddrType       = []string{"", "IPv4", "", "Domain", "IPv6"}
+	Verbose        = false
+	errAddrType     = fmt.Errorf("socks addr type not supported")
+	errVer         = fmt.Errorf("socks version not supported")
+	errAuthExtraData  = fmt.Errorf("socks authentication received extra data")
+	errReqExtraData  = fmt.Errorf("socks request received extra data")
+	errCmd          = fmt.Errorf("socks only supports CONNECT command")
+	connStats      = make(map[net.Conn]*ClientStats)
+	statsMutex     sync.RWMutex
 )
+
+func init() {
+	flag.String("addr", ":8080", "proxy listen address (ignored in main.go, use config)")
+}
 
 const (
 	socksVer5       = 0x05
@@ -321,9 +329,114 @@ func sendAuthFailure(conn net.Conn) {
 	_, _ = conn.Write([]byte{socksVer5, 0x01})
 }
 
+var (
+	resetFlag      = flag.Bool("reset", false, "reset databases (drop and recreate tables)")
+	createUserFlag = flag.String("create-user", "", "create a new user (format: username:password)")
+	deleteUserFlag = flag.String("delete-user", "", "delete a user by username")
+
+	authDBPath      = flag.String("auth-db-path", "/etc/go-socks5/users.db", "path to auth SQLite database")
+	accountingDBPath = flag.String("accounting-db-path", "/etc/go-socks5/traffic.db", "path to traffic SQLite database")
+)
+
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
+	flag.Parse()
+
+	if *resetFlag || *createUserFlag != "" || *deleteUserFlag != "" {
+		handleAdminCommands()
+		return
+	}
+
+	runServer()
+}
+
+func handleAdminCommands() {
+	if *resetFlag {
+		log.Println("Resetting databases...")
+		authDBPath := *authDBPath
+		accountingDBPath := *accountingDBPath
+
+		if authDBPath != "" {
+			if err := auth.ResetDB(authDBPath); err != nil {
+				log.Printf("Warning: auth reset failed: %v", err)
+			} else {
+				log.Println("Auth database reset successfully")
+			}
+		}
+
+		if accountingDBPath != "" {
+			if err := accounting.ResetTrafficDB(accountingDBPath); err != nil {
+				log.Printf("Warning: accounting reset failed: %v", err)
+			} else {
+				log.Println("Accounting database reset successfully")
+			}
+		}
+	}
+
+	if *createUserFlag != "" {
+		username, password, ok := parseUserPass(*createUserFlag)
+		if !ok {
+			fmt.Fprintln(os.Stderr, "Invalid format, use username:password")
+			os.Exit(1)
+		}
+
+		db, err := auth.OpenDB(*authDBPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to open auth database: %v\n", err)
+			os.Exit(1)
+		}
+		defer db.Close()
+
+		hash, err := hashPassword(password)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to hash password: %v\n", err)
+			os.Exit(1)
+		}
+
+		_, err = db.CreateUser(username, hash)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create user: %v\n", err)
+			os.Exit(1)
+		}
+		log.Printf("Created user: %s", username)
+	}
+
+	if *deleteUserFlag != "" {
+		db, err := auth.OpenDB(*authDBPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to open auth database: %v\n", err)
+			os.Exit(1)
+		}
+		defer db.Close()
+
+		err = db.DeleteUser(*deleteUserFlag)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete user: %v\n", err)
+			os.Exit(1)
+		}
+		log.Printf("Deleted user: %s", *deleteUserFlag)
+	}
+}
+
+func parseUserPass(s string) (string, string, bool) {
+	for i := 0; i < len(s); i++ {
+		if s[i] == ':' {
+			return s[:i], s[i+1:], true
+		}
+	}
+	return "", "", false
+}
+
+func hashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
+
+func runServer() {
 	cfg := config.Parse()
 
 	Verbose = cfg.Verbose

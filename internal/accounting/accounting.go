@@ -118,6 +118,21 @@ func (r *LocalRecorder) Close() error {
 	return nil
 }
 
+func ResetTrafficDB(path string) error {
+	conn, err := sql.Open("sqlite", path)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	_, err = conn.Exec("DROP TABLE IF EXISTS connections")
+	if err != nil {
+		return err
+	}
+
+	return initTrafficSchema(conn)
+}
+
 type RemoteRecorder struct {
 	apiURL   string
 	apiKey   string

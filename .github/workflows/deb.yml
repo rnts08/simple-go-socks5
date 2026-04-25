@@ -1,0 +1,66 @@
+name: Build .deb Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dh-make debhelper devscripts
+
+      - name: Build the package
+        run: |
+          # Set up version
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "$VERSION" > VERSION
+          
+          # Update changelog with this version
+          dch --newversion "$VERSION-1" --distribution stable "Release $VERSION"
+          
+          # Build
+          dpkg-buildpackage -us -uc
+
+      - name: Find .deb file
+        run: |
+          FILENAME=$(ls ../go-socks5_*_amd64.deb)
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+        id: find
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: ${{ steps.find.outputs.filename }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to Assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.find.outputs.filename }}
+          asset_name: go-socks5_amd64.deb
+          asset_content_type: application/x-debian-package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,34 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    configure)
+        # Create config directory
+        mkdir -p /etc/go-socks5
+        chmod 755 /etc/go-socks5
+
+        # Initialize databases
+        echo "Initializing databases..."
+        go-socks5 -reset -auth-db-path /etc/go-socks5/users.db -accounting-db-path /etc/go-socks5/traffic.db
+        
+        # Set permissions
+        chown root:root /etc/go-socks5/users.db /etc/go-socks5/traffic.db
+        chmod 600 /etc/go-socks5/users.db /etc/go-socks5/traffic.db
+
+        # Enable and start service
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload
+            systemctl enable go-socks5
+            systemctl start go-socks5
+            echo "go-socks5 service started."
+        fi
+        ;;
+    
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+    
+    *)
+        ;;
+esac
+
+exit 0

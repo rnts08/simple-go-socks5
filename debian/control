@@ -1,0 +1,21 @@
+Source: go-socks5
+Section: net
+Priority: optional
+Maintainer: Your Name <your@email.com>
+Build-Depends: debhelper-compat (= 13), golang-go
+Standards-Version: 4.6.0
+Homepage: https://github.com/yourrepo/go-socks5
+
+Package: go-socks5
+Architecture: amd64
+Depends: ${misc:Depends}, libc6 (>= 2.17), ca-certificates
+Description: SOCKS5 proxy server with authentication and traffic accounting
+ A SOCKS5 proxy server written in Go with local SQLite and remote API
+ support for authentication and traffic accounting.
+ .
+ Features include:
+  * RFC 1928 compliant SOCKS5 CONNECT command
+  * Local SQLite database or remote API validation
+  * Traffic accounting to local SQLite or remote API
+  * Flexible modes: local-only, remote-only, or both
+  * Mock mode for testing without real backends

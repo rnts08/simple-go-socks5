@@ -42,6 +42,26 @@ func initSchema(db *sql.DB) error {
 	return err
 }
 
+func InitDB(path string) (*DB, error) {
+	conn, err := sql.Open("sqlite", path)
+	if err != nil {
+		return nil, err
+	}
+	if err := resetSchema(conn); err != nil {
+		conn.Close()
+		return nil, err
+	}
+	return &DB{conn: conn}, nil
+}
+
+func resetSchema(db *sql.DB) error {
+	_, err := db.Exec("DROP TABLE IF EXISTS users")
+	if err != nil {
+		return err
+	}
+	return initSchema(db)
+}
+
 func (d *DB) GetPasswordHash(username string) (string, error) {
 	var hash string
 	err := d.conn.QueryRow("SELECT password_hash FROM users WHERE username = ?", username).Scan(&hash)
@@ -87,4 +107,19 @@ func (d *DB) DeleteUser(username string) error {
 
 func (d *DB) Close() error {
 	return d.conn.Close()
+}
+
+func ResetDB(path string) error {
+	conn, err := sql.Open("sqlite", path)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	_, err = conn.Exec("DROP TABLE IF EXISTS users")
+	if err != nil {
+		return err
+	}
+
+	return initSchema(conn)
 }
