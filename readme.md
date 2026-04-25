@@ -114,12 +114,60 @@ CREATE TABLE connections (
 
 ```bash
 go build -o socks5 .
+# or
+make build
 ```
 
 ## Testing
 
 ```bash
 go test ./...
+# or
+make test
+```
+
+## Installation
+
+### Using Makefile (recommended)
+
+```bash
+make install
+```
+
+This installs:
+- Binary to `/usr/local/bin/socks5`
+- Config to `/etc/socks5/`
+- Default config to `/etc/default/socks5`
+- systemd service to `/etc/systemd/system/socks5.service`
+- SysV init script to `/etc/init.d/socks5`
+
+### Manual Installation
+
+1. Build: `make build`
+2. Install binary: `install -m 755 socks5 /usr/local/bin/`
+3. Create config: `mkdir -p /etc/socks5`
+4. Copy config files to `/etc/socks5/`
+5. Copy service file to `/etc/systemd/system/`
+6. Enable: `systemctl enable socks5`
+
+### Running
+
+#### systemd
+```bash
+systemctl start socks5
+systemctl enable socks5  # on boot
+```
+
+#### SysVinit
+```bash
+/etc/init.d/socks5 start
+update-rc.d socks5 defaults
+```
+
+### Uninstallation
+
+```bash
+make uninstall
 ```
 
 ## Credits

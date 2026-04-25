@@ -1,0 +1,19 @@
+listen_addr: ":8080"
+verbose: false
+
+auth:
+  mode: "local"
+  db_path: "/etc/socks5/users.db"
+  # mode: "remote"
+  # api_url: "https://api.example.com/api/login"
+  # api_key: ""
+
+accounting:
+  mode: "local"
+  db_path: "/etc/socks5/traffic.db"
+  api_url: "https://api.example.com"
+  api_key: ""
+  interval: "60s"
+
+# Uncomment for mock mode during testing:
+# mock_api: true
