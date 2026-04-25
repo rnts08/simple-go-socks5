@@ -1,3 +1,6 @@
 socks5
 *.db
 *.db-journal
+coverage.html
+coverage.out
+*.test
