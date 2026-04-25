@@ -1,0 +1,27 @@
+[Unit]
+Description=go-socks5 SOCKS5 Proxy Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/bin/go-socks5 -addr :8080 -auth-mode local -auth-db-path /etc/go-socks5/users.db -accounting-mode local -accounting-db-path /etc/go-socks5/traffic.db
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/
+
+# Allow write to config directory
+ReadWritePaths=/etc/go-socks5
+
+[Install]
+WantedBy=multi-user.target
