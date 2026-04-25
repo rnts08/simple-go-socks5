@@ -29,19 +29,13 @@ jobs:
 
       - name: Build the package
         run: |
-          # Set up environment for dch
           export DEBEMAIL="release@example.com"
           export EMAIL="release@example.com"
           export DEBFULLNAME="Go Socks5 Release"
           
-          # Set up version
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "$VERSION" > VERSION
-          
-          # Update changelog with this version
           dch --newversion "$VERSION-1" --distribution stable "Release $VERSION"
-          
-          # Build
           dpkg-buildpackage -us -uc -d
 
       - name: Find .deb file
@@ -50,35 +44,12 @@ jobs:
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
         id: find
 
-      - name: Upload .deb to Release
-        if: github.event_name == 'release'
+      - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           files: ${{ steps.find.outputs.filename }}
           draft: false
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload .deb as Release Asset (tag push)
-        if: github.event_name == 'push'
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ steps.find.outputs.filename }}
-          asset_name: go-socks5_amd64.deb
-          asset_content_type: application/x-debian-package
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Also upload to GitHub Release (works for both)
-        if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ steps.find.outputs.filename }}
-          asset_name: go-socks5_amd64.deb
-          asset_content_type: application/x-debian-package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
