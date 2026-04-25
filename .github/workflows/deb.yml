@@ -56,7 +56,8 @@ jobs:
       - name: Find .deb file
         run: |
           FILENAME=$(ls ../go-socks5_*.deb)
-          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          cp "$FILENAME" .
+          echo "filename=$(basename $FILENAME)" >> $GITHUB_OUTPUT
         id: find
 
       - name: Upload artifact
@@ -113,7 +114,8 @@ jobs:
       - name: Find .deb file
         run: |
           FILENAME=$(ls ../go-socks5_*.deb)
-          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          cp "$FILENAME" .
+          echo "filename=$(basename $FILENAME)" >> $GITHUB_OUTPUT
         id: find
 
       - name: Upload artifact
