@@ -16,35 +16,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          platforms: arm64
+          go-version: '1.25'
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Go binary for amd64
+      - name: Build amd64
         run: |
-          docker build --build-arg GOARCH=amd64 --platform linux/amd64 -t go-socks5:amd64 .
+          GOARCH=amd64 CGO_ENABLED=0 go build -o go-socks5-linux-amd64 .
 
-      - name: Build Go binary for arm64
+      - name: Build arm64
         run: |
-          docker build --build-arg GOARCH=arm64 --platform linux/arm64 -t go-socks5:arm64 .
-
-      - name: Extract amd64 binary
-        run: |
-          docker create --name go-socks5-amd64 go-socks5:amd64
-          docker cp go-socks5-amd64:/go/bin/go-socks5 ./go-socks5-linux-amd64
-          docker rm go-socks5-amd64
-          chmod +x go-socks5-linux-amd64
-
-      - name: Extract arm64 binary
-        run: |
-          docker create --name go-socks5-arm64 go-socks5:arm64
-          docker cp go-socks5-arm64:/go/bin/go-socks5 ./go-socks5-linux-arm64
-          docker rm go-socks5-arm64
-          chmod +x go-socks5-linux-arm64
+          GOARCH=arm64 CGO_ENABLED=0 go build -o go-socks5-linux-arm64 .
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
