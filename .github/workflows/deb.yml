@@ -50,7 +50,8 @@ jobs:
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
         id: find
 
-      - name: Upload to Release
+      - name: Upload .deb to Release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -60,7 +61,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload to Assets
+      - name: Upload .deb as Release Asset (tag push)
+        if: github.event_name == 'push'
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.find.outputs.filename }}
+          asset_name: go-socks5_amd64.deb
+          asset_content_type: application/x-debian-package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Also upload to GitHub Release (works for both)
+        if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
