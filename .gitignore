@@ -1,6 +1,17 @@
 socks5
+go-socks5
 *.db
 *.db-journal
 coverage.html
 coverage.out
 *.test
+
+debian/.debhelper/
+debian/*.log
+debian/*.deb
+debian/*.changes
+debian/*.buildinfo
+debian/*.build
+debian/*.tar.*
+debian/files
+debian/go-socks5.substvars

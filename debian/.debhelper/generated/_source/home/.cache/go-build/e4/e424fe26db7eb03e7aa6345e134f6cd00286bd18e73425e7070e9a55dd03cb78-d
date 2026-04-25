@@ -1,0 +1,4 @@
+./auth.go
+./db.go
+./reset.go
+./auth_test.go
