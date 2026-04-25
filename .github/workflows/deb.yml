@@ -37,13 +37,13 @@ jobs:
       - name: Create amd64 package
         run: |
           cd debian
-          dpkg-deb --build --root-cache-group --arch=amd64 . ../go-socks5_amd64.deb
+          dpkg-deb --build --arch=amd64 . ../go-socks5_amd64.deb
 
       - name: Create arm64 package
         run: |
           cd debian
           mv go-socks5-arm64 go-socks5
-          dpkg-deb --build --root-cache-group --arch=arm64 . ../go-socks5_arm64.deb
+          dpkg-deb --build --arch=arm64 . ../go-socks5_arm64.deb
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
