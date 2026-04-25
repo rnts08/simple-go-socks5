@@ -1,5 +1,3 @@
-# No binaries
-go-socks5
-go-socks5.bin
-build/
-bin/
+socks5
+*.db
+*.db-journal
