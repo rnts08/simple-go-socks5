@@ -6,7 +6,15 @@ coverage.html
 coverage.out
 *.test
 
+build/
 debian/.debhelper/
+debian/*.log
+debian/*.deb
+debian/*.changes
+debian/*.buildinfo
+debian*.tar.*
+debian/files
+debian/go-socks5.substvars
 debian/*.log
 debian/*.deb
 debian/*.changes
