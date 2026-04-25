@@ -1,6 +1,6 @@
 .PHONY: all build test install clean run help
 
-BINARY_NAME=socks5
+BINARY_NAME=go-socks5
 INSTALL_DIR=/usr/local/bin
 CONFIG_DIR=/etc/go-socks5
 INIT_DIR=/etc/init.d
@@ -11,6 +11,18 @@ all: build
 
 build:
 	go build -o $(BINARY_NAME) .
+
+build-deb:
+	@echo "Building Debian package..."
+	@if ! command -v dpkg-buildpackage >/dev/null 2>&1; then \
+		echo "Error: dpkg-buildpackage not installed. Run: sudo apt-get install dh-make debhelper"; \
+		exit 1; \
+	fi
+	fakeroot -- dpkg-buildpackage -us -uc
+	@echo ""
+	@echo "Package built successfully!"
+	@echo "Output files:"
+	@ls -la ../go-socks5_* 2>/dev/null | head -5 || true
 
 test:
 	go test ./internal/... -v -count=1
@@ -75,10 +87,12 @@ run: build
 
 help:
 	@echo "Available targets:"
-	@echo "  make build        - Build the application"
-	@echo "  make test        - Run tests"
-	@echo "  make test-coverage - Run tests with coverage report"
-	@echo "  make clean       - Remove build artifacts"
-	@echo "  make install    - Install binary, config, and service files"
-	@echo "  make uninstall  - Remove installed components"
-	@echo "  make run        - Build and run locally"
+	@echo "  make build          - Build the application"
+	@echo "  make build-deb     - Build Debian package"
+	@echo "  make test          - Run tests"
+	@echo "  make test-e2e      - Run e2e tests"
+	@echo "  make test-coverage  - Run tests with coverage report"
+	@echo "  make clean         - Remove build artifacts"
+	@echo "  make install       - Install binary, config, and service files"
+	@echo "  make uninstall      - Remove installed components"
+	@echo "  make run            - Build and run locally"
